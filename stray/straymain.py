@@ -75,5 +75,16 @@ async def serverinfo(ctx):
 async def avatar(ctx, member: discord.Member = None):
     member = member or ctx.author
     await ctx.send(member.avatar.url)
+    
+@bot.command()
+@commands.has_permissions(administrator=True)
+async def say(ctx, *, text):
+    await ctx.message.delete()
+    await ctx.send(text)
+
+@say.error
+async def say_error(ctx, error):
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send("You must be an admin to use this command.")
 
 bot.run(token)
