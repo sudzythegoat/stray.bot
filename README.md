@@ -1,1 +1,3 @@
-yea
+cmds:
+
+ban, kick, mute
