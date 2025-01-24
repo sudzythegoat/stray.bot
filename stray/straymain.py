@@ -114,10 +114,20 @@ async def unlock(ctx):
     await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=True)
     await ctx.send("This channel has been unlocked.")
 
+from datetime import timedelta
+import discord
+
 @bot.command()
 @commands.has_permissions(administrator=True)
-async def warn(ctx, *, warnmessage):
-    dm the user saying "fYou were warned for: {warnmessage}"
-    and mute them for 1 day
+async def warn(ctx, member: discord.Member, *, warnmessage):
+    try:
+        await member.send(f"You were warned for: {warnmessage}")
+        timeout_until = discord.utils.utcnow() + timedelta(days=1)
+        await member.edit(timeout_until=timeout_until, reason=warnmessage)
+        await ctx.send(f"{member} has been warned and muted for 1 day. Reason: {warnmessage}")
+    except discord.Forbidden:
+        await ctx.send("I don't have permission to warn or mute this user.")
+    except discord.HTTPException:
+        await ctx.send("An error occurred while trying to warn or mute this user.")
 
 bot.run(token)
