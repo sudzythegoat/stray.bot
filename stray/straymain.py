@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from datetime import timedelta
 
 intents = discord.Intents.default()
 intents.messages = True
@@ -86,5 +87,37 @@ async def say(ctx, *, text):
 async def say_error(ctx, error):
     if isinstance(error, commands.MissingPermissions):
         await ctx.send("You must be an admin to use this command.")
+
+@bot.command()
+async def poll(ctx, *, question):
+    message = await ctx.send(f"📊 **Poll:** {question}")
+    await message.add_reaction("1️⃣")
+    await message.add_reaction("2️⃣")
+
+@bot.command()
+async def botinfo(ctx):
+    embed = discord.Embed(title="Bot Information", color=discord.Color.blue())
+    embed.add_field(name="Name", value=bot.user.name, inline=False)
+    embed.add_field(name="ID", value=bot.user.id, inline=False)
+    embed.add_field(name="Ping", value=f"{round(bot.latency * 1000)}ms", inline=False)
+    await ctx.send(embed=embed)
+
+@bot.command()
+@commands.has_permissions(manage_channels=True)
+async def lock(ctx, *, lockdownmessage):
+    await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=False)
+    await ctx.send(f"This channel has been locked. Reason {lockdownmessage}")
+
+@bot.command()
+@commands.has_permissions(manage_channels=True)
+async def unlock(ctx):
+    await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=True)
+    await ctx.send("This channel has been unlocked.")
+
+@bot.command()
+@commands.has_permissions(administrator=True)
+async def warn(ctx, *, warnmessage):
+    dm the user saying "fYou were warned for: {warnmessage}"
+    and mute them for 1 day
 
 bot.run(token)
