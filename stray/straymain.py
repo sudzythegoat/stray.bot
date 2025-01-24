@@ -56,4 +56,24 @@ async def delmute(ctx, member: discord.Member):
     except discord.HTTPException:
         await ctx.send(f"An error occurred while trying to unmute {member}.")
 
+@bot.command()
+@commands.has_permissions(manage_messages=True)
+async def purge(ctx, amount: int):
+    await ctx.channel.purge(limit=amount)
+    await ctx.send(f'{amount} messages have been deleted.', delete_after=5)
+
+@bot.command()
+async def ping(ctx):
+    await ctx.send(f'Pong! {round(bot.latency * 1000)}ms')
+
+@bot.command()
+async def serverinfo(ctx):
+    guild = ctx.guild
+    await ctx.send(f"Server Name: {guild.name}\nMembers: {guild.member_count}")
+
+@bot.command()
+async def avatar(ctx, member: discord.Member = None):
+    member = member or ctx.author
+    await ctx.send(member.avatar.url)
+
 bot.run(token)
