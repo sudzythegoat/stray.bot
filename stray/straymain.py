@@ -1,11 +1,12 @@
 import discord
 from discord.ext import commands
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 intents = discord.Intents.default()
-intents.messages = True
+intents.message_content = True
 intents.guilds = True
 intents.members = True
+
 bot = commands.Bot(command_prefix='?', intents=intents)
 
 @bot.event
@@ -38,19 +39,19 @@ async def kick(ctx, member: discord.Member, *, reason=None):
 @commands.has_permissions(moderate_members=True)
 async def mute(ctx, member: discord.Member, duration: int, *, reason=None):
     try:
-        timeout_until = discord.utils.utcnow() + discord.timedelta(minutes=duration)
-        await member.edit(timeout_until=timeout_until, reason=reason)
-        await ctx.send(f'{member} has been muted out for {duration} minutes. Reason: {reason}')
+        timeout_until = datetime.utcnow() + timedelta(minutes=duration)
+        await member.edit(timeout=timeout_until, reason=reason)
+        await ctx.send(f'{member} has been muted for {duration} minutes. Reason: {reason}')
     except discord.Forbidden:
         await ctx.send("I don't have permission to mute this user.")
     except discord.HTTPException:
         await ctx.send("An error occurred while trying to mute this user.")
-        
+
 @bot.command()
 @commands.has_permissions(moderate_members=True)
 async def delmute(ctx, member: discord.Member):
     try:
-        await member.edit(timeout_until=None)
+        await member.edit(timeout=None)
         await ctx.send(f'{member} has been unmuted.')
     except discord.Forbidden:
         await ctx.send("I don't have permission to unmute this user.")
@@ -60,8 +61,13 @@ async def delmute(ctx, member: discord.Member):
 @bot.command()
 @commands.has_permissions(manage_messages=True)
 async def purge(ctx, amount: int):
-    await ctx.channel.purge(limit=amount)
-    await ctx.send(f'{amount} messages have been deleted.', delete_after=5)
+    try:
+        deleted = await ctx.channel.purge(limit=amount)
+        await ctx.send(f'{len(deleted)} messages have been deleted.', delete_after=5)
+    except discord.Forbidden:
+        await ctx.send("I don't have permission to delete messages.")
+    except discord.HTTPException:
+        await ctx.send("An error occurred while trying to delete messages.")
 
 @bot.command()
 async def ping(ctx):
@@ -75,8 +81,8 @@ async def serverinfo(ctx):
 @bot.command()
 async def avatar(ctx, member: discord.Member = None):
     member = member or ctx.author
-    await ctx.send(member.avatar.url)
-    
+    await ctx.send(member.avatar.url if member.avatar else "This user has no avatar.")
+
 @bot.command()
 @commands.has_permissions(administrator=True)
 async def say(ctx, *, text):
@@ -106,7 +112,7 @@ async def botinfo(ctx):
 @commands.has_permissions(manage_channels=True)
 async def lock(ctx, *, lockdownmessage):
     await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=False)
-    await ctx.send(f"This channel has been locked. Reason {lockdownmessage}")
+    await ctx.send(f"This channel has been locked. Reason: {lockdownmessage}")
 
 @bot.command()
 @commands.has_permissions(manage_channels=True)
@@ -114,20 +120,17 @@ async def unlock(ctx):
     await ctx.channel.set_permissions(ctx.guild.default_role, send_messages=True)
     await ctx.send("This channel has been unlocked.")
 
-from datetime import timedelta
-import discord
-
 @bot.command()
 @commands.has_permissions(administrator=True)
 async def warn(ctx, member: discord.Member, *, warnmessage):
     try:
         await member.send(f"You were warned for: {warnmessage}")
-        timeout_until = discord.utils.utcnow() + timedelta(days=1)
-        await member.edit(timeout_until=timeout_until, reason=warnmessage)
+        timeout_until = datetime.utcnow() + timedelta(days=1)
+        await member.edit(timeout=timeout_until, reason=warnmessage)
         await ctx.send(f"{member} has been warned and muted for 1 day. Reason: {warnmessage}")
     except discord.Forbidden:
         await ctx.send("I don't have permission to warn or mute this user.")
     except discord.HTTPException:
         await ctx.send("An error occurred while trying to warn or mute this user.")
 
-bot.run(token)
+bot.run('YOUR_BOT_TOKEN')
